@@ -816,7 +816,8 @@ function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2200);
+  clearTimeout(t._hideTimer);
+  t._hideTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
 // ─── Helpers ──────────────────────────────────────────────
@@ -901,41 +902,57 @@ async function analyzeVideo() {
 
 function renderVideoResults(data, url) {
   // Badge
-  document.getElementById('video-id-badge').textContent =
-    `video_id: ${data.video_id} · ${data.transcript_word_count?.toLocaleString() || '?'} words`;
-
-  // Summary
+  const tw = (data.transcript_word_count !== undefined && data.transcript_word_count !== null) ? data.transcript_word_count.toLocaleString() : '?';
+  document.getElementById('video-id-badge').textContent = `video_id: ${data.video_id} · ${tw} words`;
+  // Video details / stats
   const summaryEl = document.getElementById('summary-text');
-  const paras = data.summary.split(/\n+/).filter(Boolean);
-  summaryEl.innerHTML = paras.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+  const desc = data.description || '';
+  const descPreview = desc ? desc.split('\n').slice(0,3).map(d => `<p>${escapeHtml(d)}</p>`).join('') : '';
+  // If no description, show transcript preview
+  const transcriptPreview = data.transcript ? escapeHtml(data.transcript.slice(0,800)) : '';
+  summaryEl.innerHTML = descPreview || `<p>${transcriptPreview || 'No description or transcript available.'}</p>`;
 
-  // Insights
+  // Stats into insights-list (reusing the UI element)
   const insightsList = document.getElementById('insights-list');
-  insightsList.innerHTML = data.insights.map((ins, i) => `
+  const stats = [];
+  const uploader = data.uploader || '—';
+  const views = (data.view_count !== undefined && data.view_count !== null) ? data.view_count.toLocaleString() : '—';
+  const likes = (data.like_count !== undefined && data.like_count !== null) ? data.like_count.toLocaleString() : '—';
+  const comments = (data.comment_count !== undefined && data.comment_count !== null) ? data.comment_count.toLocaleString() : '—';
+  const engagement = (data.engagement_score !== undefined && data.engagement_score !== null) ? (data.engagement_score * 100).toFixed(2) + '%' : '—';
+  const durationStr = data.duration ? formatSeconds(data.duration) : '—';
+  stats.push(['Uploader', uploader]);
+  stats.push(['Views', views]);
+  stats.push(['Likes', likes]);
+  stats.push(['Comments', comments]);
+  stats.push(['Engagement', engagement]);
+  stats.push(['Duration', durationStr]);
+  insightsList.innerHTML = stats.map((s, i) => `
     <li>
       <span class="insight-num">${String(i + 1).padStart(2, '0')}</span>
-      <span>${escapeHtml(ins)}</span>
+      <span><strong>${escapeHtml(s[0])}:</strong> ${escapeHtml(String(s[1]))}</span>
     </li>
   `).join('');
 
-  // Sections
+  // Sections: show top transcript segments if available
   const sectionsBody = document.getElementById('sections-body');
   const baseYtUrl = `https://www.youtube.com/watch?v=${data.video_id}`;
-  sectionsBody.innerHTML = data.sections.map(sec => {
-    const ts = formatSeconds(sec.start_seconds || 0);
-    const jumpUrl = `${baseYtUrl}&t=${Math.round(sec.start_seconds || 0)}`;
+  const segments = data.transcript_segments || [];
+  sectionsBody.innerHTML = (segments.slice(0,8).map(seg => {
+    const start = Math.round(seg.start || 0);
+    const ts = formatSeconds(start);
+    const jumpUrl = `${baseYtUrl}&t=${start}`;
+    const title = (seg.text || '').slice(0,120);
     return `
       <tr>
-        <td>${escapeHtml(sec.title)}</td>
+        <td>${escapeHtml(title)}</td>
         <td><span class="ts-badge">${ts}</span></td>
         <td>
-          <a href="${jumpUrl}" target="_blank" rel="noopener" class="jump-link">
-            ▶ Watch
-          </a>
+          <a href="${jumpUrl}" target="_blank" rel="noopener" class="jump-link">▶ Watch</a>
         </td>
       </tr>
     `;
-  }).join('');
+  }).join('')) || '<tr><td colspan="3" style="color:var(--text-dim)">No transcript segments available</td></tr>';
 
   document.getElementById('video-results').classList.add('visible');
 }
@@ -944,15 +961,19 @@ function renderVideoResults(data, url) {
 function copyMarkdown() {
   if (!_currentVideoResult) return;
   const d = _currentVideoResult;
-
-  let md = `## Summary\n\n${d.summary}\n\n`;
-  md += `## Key Insights\n\n`;
-  d.insights.forEach((ins, i) => { md += `${i + 1}. ${ins}\n`; });
-  md += `\n## Sections\n\n| Title | Timestamp |\n|-------|----------|\n`;
-  d.sections.forEach(sec => {
-    md += `| ${sec.title} | ${formatSeconds(sec.start_seconds || 0)} |\n`;
-  });
-  md += `\n---\nSource: ${_currentVideoUrl}`;
+  let md = `# ${d.title || 'Video'}\n\n`;
+  md += `**URL:** ${_currentVideoUrl}\n\n`;
+  md += `**Uploader:** ${d.uploader || '—'}  \n`;
+  const _views = (d.view_count !== undefined && d.view_count !== null) ? d.view_count.toLocaleString() : '—';
+  const _likes = (d.like_count !== undefined && d.like_count !== null) ? d.like_count.toLocaleString() : '—';
+  const _comments = (d.comment_count !== undefined && d.comment_count !== null) ? d.comment_count.toLocaleString() : '—';
+  md += `**Views:** ${_views}  \n`;
+  md += `**Likes:** ${_likes}  \n`;
+  md += `**Comments:** ${_comments}  \n`;
+  if (d.transcript) {
+    md += `\n## Transcript (preview)\n\n`;
+    md += d.transcript.slice(0,1000) + (d.transcript.length > 1000 ? '\n\n... (truncated)' : '') + '\n';
+  }
 
   navigator.clipboard.writeText(md)
     .then(() => showToast('✓ Copied to clipboard'))
@@ -1055,9 +1076,16 @@ function escapeHtml(str) {
     if (res.ok) {
       const data = await res.json();
       const label = document.getElementById('health-label');
-      label.textContent = data.openrouter_configured
-        ? 'AI + pipeline ready'
-        : 'Pipeline ready (no AI key)';
+      const dot = document.querySelector('.health-badge .dot');
+      if (data.openrouter_configured) {
+        label.textContent = 'AI + pipeline ready';
+        dot.style.background = 'linear-gradient(90deg,#39ff91,#00d4ff)';
+        dot.style.boxShadow = '0 0 10px #39ff9133';
+      } else {
+        label.textContent = 'Pipeline ready (no AI key)';
+        dot.style.background = '#ffcc66';
+        dot.style.boxShadow = 'none';
+      }
     }
   } catch (_) { /* silent */ }
 })();
