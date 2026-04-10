@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TubeIntel — AI Learning Companion for YouTube</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────────────── */
+:root {
+  --bg:          #080c0f;
+  --surface:     #0e1519;
+  --surface-2:   #141c22;
+  --border:      #1e2d38;
+  --border-bright: #2a3f50;
+  --accent:      #00d4ff;
+  --accent-dim:  #00a8cc22;
+  --accent-2:    #ff4b4b;
+  --accent-3:    #39ff91;
+  --text:        #e8f0f5;
+  --text-dim:    #7a9ab0;
+  --text-muted:  #3d5566;
+  --font-display: 'Syne', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'DM Mono', monospace;
+  --radius:       10px;
+  --radius-lg:    16px;
+  --shadow:       0 4px 24px #00000066;
+  --shadow-accent: 0 0 30px #00d4ff18;
+}
+
+/* ─── RESET ─────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── BACKGROUND TEXTURE ────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, #00d4ff09 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, #ff4b4b07 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── LAYOUT ─────────────────────────────────────────────── */
+.page-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+/* ─── HEADER ─────────────────────────────────────────────── */
+header {
+  padding: 48px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+}
+.header-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.logo-block {}
+.logo-wordmark {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 14px var(--accent);
+  animation: pulse-dot 2s infinite;
+}
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 14px var(--accent); opacity: 1; }
+  50% { box-shadow: 0 0 24px var(--accent), 0 0 40px var(--accent); opacity: 0.7; }
+}
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 6px;
+}
+.health-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border-bright);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.health-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-3); }
+
+/* ─── TABS ───────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 4px;
+  margin-bottom: 36px;
+  width: fit-content;
+}
+.tab-btn {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 22px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.tab-btn:hover { color: var(--text); background: var(--surface-2); }
+.tab-btn.active {
+  background: var(--accent);
+  color: #000;
+  font-weight: 700;
+  box-shadow: 0 2px 16px #00d4ff44;
+}
+.tab-btn .icon { font-size: 15px; }
+
+/* ─── PANELS ─────────────────────────────────────────────── */
+.panel { display: none; animation: fadeIn 0.25s ease; }
+.panel.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ─── CARDS ──────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: var(--border-bright); }
+.card-title {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.card-title .accent-line {
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* ─── FORM ELEMENTS ──────────────────────────────────────── */
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+input[type="text"],
+input[type="url"],
+input[type="number"] {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px #00d4ff18;
+}
+input::placeholder { color: var(--text-muted); }
+
+.field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+
+/* ─── BUTTONS ────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  padding: 12px 28px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+  margin-top: 20px;
+  box-shadow: 0 2px 20px #00d4ff33;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #33ddff;
+  box-shadow: 0 4px 28px #00d4ff55;
+  transform: translateY(-1px);
+}
+.btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border-bright);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--border-bright);
+}
+.btn-ghost {
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  padding: 8px 16px;
+}
+.btn-ghost:hover:not(:disabled) {
+  color: var(--text);
+  border-color: var(--border-bright);
+}
+.btn-download {
+  background: #13261a;
+  color: var(--accent-3);
+  border: 1px solid #39ff9133;
+}
+.btn-download:hover:not(:disabled) {
+  background: #1a3324;
+  box-shadow: 0 2px 14px #39ff9122;
+}
+
+/* ─── LOADING ────────────────────────────────────────────── */
+.loading-state {
+  display: none;
+  align-items: center;
+  gap: 14px;
+  padding: 24px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-top: 20px;
+}
+.loading-state.visible { display: flex; }
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--border-bright);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ─── ALERT ──────────────────────────────────────────────── */
+.alert {
+  display: none;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  margin-top: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.alert.visible { display: flex; align-items: flex-start; gap: 10px; }
+.alert-error {
+  background: #1f0a0a;
+  border: 1px solid #4d1414;
+  color: #ff8080;
+}
+.alert-warn {
+  background: #1a1408;
+  border: 1px solid #4d3a0a;
+  color: #ffcc66;
+}
+.alert-icon { font-size: 14px; flex-shrink: 0; }
+
+/* ─── RESULTS: VIDEO AI ──────────────────────────────────── */
+#video-results { display: none; margin-top: 24px; }
+#video-results.visible { display: block; }
+
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.result-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.summary-text {
+  font-size: 14.5px;
+  line-height: 1.75;
+  color: var(--text);
+}
+.summary-text p { margin-bottom: 12px; }
+.summary-text p:last-child { margin-bottom: 0; }
+
+.insights-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.insights-list li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.insight-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid #00d4ff22;
+  border-radius: 5px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.sections-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.sections-table th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  text-align: left;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sections-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+  vertical-align: middle;
+}
+.sections-table tr:last-child td { border-bottom: none; }
+.sections-table tr:hover td { background: var(--surface-2); color: var(--text); }
+.ts-badge {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px solid #00d4ff22;
+  white-space: nowrap;
+}
+.jump-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  padding: 3px 10px;
+  border-radius: 5px;
+  transition: all 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.jump-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* ─── RESULTS: CHANNEL ───────────────────────────────────── */
+#channel-results { display: none; margin-top: 24px; }
+#channel-results.visible { display: block; }
+
+.downloads-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.downloads-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.video-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.video-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 0;
+  transition: border-color 0.2s;
+}
+.video-card:hover { border-color: var(--border-bright); }
+
+.video-thumb {
+  position: relative;
+  width: 100px;
+  height: 100%;
+  min-height: 80px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: var(--surface-2);
+}
+.video-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.video-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 24px;
+}
+.video-rank {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  background: rgba(0,0,0,0.8);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.video-info {
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.video-title {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.video-title:hover { color: var(--accent); }
+.video-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.stat-pill {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.stat-pill strong { color: var(--text-dim); font-weight: 500; }
+.stat-pill.good strong { color: var(--accent-3); }
+
+.transcript-preview {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-style: italic;
+}
+
+/* ─── WARN NOTICE ────────────────────────────────────────── */
+.notice {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #c98a1a;
+  background: #18130500;
+  border: 1px solid #3d2e0a;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+
+/* ─── FOOTER ─────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  margin-top: 80px;
+  padding-top: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.footer-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.footer-stack {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.stack-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* ─── COPY TOAST ─────────────────────────────────────────── */
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--accent-3);
+  color: #000;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 10px 18px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.25s;
+  pointer-events: none;
+  z-index: 999;
+}
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 640px) {
+  .video-card { grid-template-columns: 80px 1fr; }
+  .video-thumb { width: 80px; }
+  .tabs { width: 100%; }
+  .tab-btn { flex: 1; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-wrapper">
+  <!-- ─── HEADER ─────────────────────────────────────────── -->
+  <header>
+    <div class="header-inner">
+      <div class="logo-block">
+        <div class="logo-wordmark">
+          <div class="logo-dot"></div>
+          TubeIntel
+        </div>
+        <div class="logo-sub">AI Learning Companion for YouTube</div>
+      </div>
+      <div class="health-badge">
+        <div class="dot"></div>
+        <span id="health-label">System online</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── TABS ──────────────────────────────────────────── -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('video', this)">
+      <span class="icon">🧠</span> Video AI
+    </button>
+    <button class="tab-btn" onclick="switchTab('channel', this)">
+      <span class="icon">📊</span> Channel Analysis
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL 1: SINGLE VIDEO AI
+  ════════════════════════════════════════════════════════ -->
+  <div id="panel-video" class="panel active">
+
+    <div class="card">
+      <div class="card-title"><span class="accent-line"></span> Video Intelligence</div>
+      <label class="field-label" for="video-url">YouTube URL</label>
+      <input type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=…"
+             onkeydown="if(event.key==='Enter') analyzeVideo()">
+      <button class="btn btn-primary" onclick="analyzeVideo()" id="video-btn">
+        ⚡ Analyze with AI
+      </button>
+    </div>
+
+    <div class="loading-state" id="video-loading">
+      <div class="spinner"></div>
+      <div class="loading-text" id="video-loading-text">Fetching transcript…</div>
+    </div>
+
+    <div class="alert alert-error" id="video-error">
+      <span class="alert-icon">⚠</span>
+      <span id="video-error-msg"></span>
+    </div>
+
+    <div id="video-results">
+      <div class="result-header">
+        <span class="result-badge" id="video-id-badge"></span>
+        <button class="btn btn-ghost" onclick="copyMarkdown()">📋 Copy as Markdown</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="accent-line"></span> Summary</div>
+        <div class="summary-text" id="summary-text"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="accent-line"></span> Key Insights</div>
+        <ul class="insights-list" id="insights-list"></ul>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span class="accent-line"></span> Sections</div>
+        <table class="sections-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Timestamp</th>
+              <th>Jump to</th>
+            </tr>
+          </thead>
+          <tbody id="sections-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════
+       PANEL 2: CHANNEL ANALYSIS
+  ════════════════════════════════════════════════════════ -->
+  <div id="panel-channel" class="panel">
+
+    <div class="card">
+      <div class="card-title"><span class="accent-line"></span> Channel Intelligence</div>
+      <label class="field-label" for="channel-url">Channel URL</label>
+      <input type="url" id="channel-url" placeholder="https://www.youtube.com/@channel/videos">
+
+      <div class="field-row">
+        <div>
+          <label class="field-label" for="max-videos">Max videos to fetch</label>
+          <input type="number" id="max-videos" value="50" min="1" max="200">
+        </div>
+        <div>
+          <label class="field-label" for="top-n">Top N to enrich</label>
+          <input type="number" id="top-n" value="3" min="1" max="10">
+        </div>
+      </div>
+
+      <div class="notice">
+        ⚠ Each video takes ~30–60s to enrich (metadata + transcript fetch). Keep Top N ≤ 5 to avoid timeouts.
+      </div>
+
+      <button class="btn btn-primary" onclick="analyzeChannel()" id="channel-btn">
+        🚀 Run Channel Pipeline
+      </button>
+    </div>
+
+    <div class="loading-state" id="channel-loading">
+      <div class="spinner"></div>
+      <div class="loading-text">Fetching and enriching videos… this may take several minutes.</div>
+    </div>
+
+    <div class="alert alert-error" id="channel-error">
+      <span class="alert-icon">⚠</span>
+      <span id="channel-error-msg"></span>
+    </div>
+
+    <div id="channel-results">
+      <div class="downloads-bar">
+        <span class="downloads-label">Download dataset:</span>
+        <a id="json-link" href="#" class="btn btn-download">⬇ JSON</a>
+        <a id="csv-link" href="#" class="btn btn-download">⬇ CSV</a>
+        <span id="video-count-badge" class="result-badge"></span>
+      </div>
+      <div class="video-grid" id="video-grid"></div>
+    </div>
+  </div>
+
+  <!-- ─── FOOTER ─────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-text">TubeIntel — AI Learning Companion</div>
+    <div class="footer-stack">
+      <span class="stack-tag">Flask</span>
+      <span class="stack-tag">yt-dlp</span>
+      <span class="stack-tag">youtube-transcript-api</span>
+      <span class="stack-tag">OpenRouter</span>
+      <span class="stack-tag">Render</span>
+    </div>
+  </footer>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast"></div>
+
+<!-- ─────────────────────────────────────────────────────────
+     JAVASCRIPT — API consumer only, no business logic
+────────────────────────────────────────────────────────── -->
+<script>
+// ─── State ───────────────────────────────────────────────
+let _currentVideoResult = null;
+let _currentVideoId = null;
+let _currentVideoUrl = null;
+
+// ─── Tab switching ────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ─── Toast ────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ─── Helpers ──────────────────────────────────────────────
+function setLoading(id, on) {
+  const el = document.getElementById(id + '-loading');
+  if (on) el.classList.add('visible'); else el.classList.remove('visible');
+}
+
+function setError(id, msg) {
+  const el = document.getElementById(id + '-error');
+  const msgEl = document.getElementById(id + '-error-msg');
+  if (msg) {
+    msgEl.textContent = msg;
+    el.classList.add('visible');
+  } else {
+    el.classList.remove('visible');
+  }
+}
+
+function setBtn(id, disabled) {
+  document.getElementById(id + '-btn').disabled = disabled;
+}
+
+function formatSeconds(secs) {
+  const s = Math.round(secs);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sc = s % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
+  return `${m}:${String(sc).padStart(2,'0')}`;
+}
+
+function formatNumber(n) {
+  if (!n && n !== 0) return '—';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  return String(n);
+}
+
+// ─── Video AI ─────────────────────────────────────────────
+async function analyzeVideo() {
+  const url = document.getElementById('video-url').value.trim();
+  if (!url) { setError('video', 'Please enter a YouTube URL'); return; }
+
+  setError('video', null);
+  document.getElementById('video-results').classList.remove('visible');
+  setLoading('video', true);
+  setBtn('video', true);
+
+  // Animated loading messages
+  const msgs = ['Extracting video ID…', 'Fetching transcript…', 'Running AI analysis…', 'Structuring insights…'];
+  let mi = 0;
+  const msgEl = document.getElementById('video-loading-text');
+  const msgTimer = setInterval(() => {
+    mi = (mi + 1) % msgs.length;
+    msgEl.textContent = msgs[mi];
+  }, 2200);
+
+  try {
+    const res = await fetch('/api/video/process', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError('video', data.detail || data.error || `Server error ${res.status}`);
+      return;
+    }
+    _currentVideoResult = data;
+    _currentVideoId = data.video_id;
+    _currentVideoUrl = url;
+    renderVideoResults(data, url);
+  } catch (e) {
+    setError('video', 'Network error: ' + e.message);
+  } finally {
+    clearInterval(msgTimer);
+    setLoading('video', false);
+    setBtn('video', false);
+  }
+}
+
+function renderVideoResults(data, url) {
+  // Badge
+  document.getElementById('video-id-badge').textContent =
+    `video_id: ${data.video_id} · ${data.transcript_word_count?.toLocaleString() || '?'} words`;
+
+  // Summary
+  const summaryEl = document.getElementById('summary-text');
+  const paras = data.summary.split(/\n+/).filter(Boolean);
+  summaryEl.innerHTML = paras.map(p => `<p>${escapeHtml(p)}</p>`).join('');
+
+  // Insights
+  const insightsList = document.getElementById('insights-list');
+  insightsList.innerHTML = data.insights.map((ins, i) => `
+    <li>
+      <span class="insight-num">${String(i + 1).padStart(2, '0')}</span>
+      <span>${escapeHtml(ins)}</span>
+    </li>
+  `).join('');
+
+  // Sections
+  const sectionsBody = document.getElementById('sections-body');
+  const baseYtUrl = `https://www.youtube.com/watch?v=${data.video_id}`;
+  sectionsBody.innerHTML = data.sections.map(sec => {
+    const ts = formatSeconds(sec.start_seconds || 0);
+    const jumpUrl = `${baseYtUrl}&t=${Math.round(sec.start_seconds || 0)}`;
+    return `
+      <tr>
+        <td>${escapeHtml(sec.title)}</td>
+        <td><span class="ts-badge">${ts}</span></td>
+        <td>
+          <a href="${jumpUrl}" target="_blank" rel="noopener" class="jump-link">
+            ▶ Watch
+          </a>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('video-results').classList.add('visible');
+}
+
+// ─── Copy as Markdown ─────────────────────────────────────
+function copyMarkdown() {
+  if (!_currentVideoResult) return;
+  const d = _currentVideoResult;
+
+  let md = `## Summary\n\n${d.summary}\n\n`;
+  md += `## Key Insights\n\n`;
+  d.insights.forEach((ins, i) => { md += `${i + 1}. ${ins}\n`; });
+  md += `\n## Sections\n\n| Title | Timestamp |\n|-------|----------|\n`;
+  d.sections.forEach(sec => {
+    md += `| ${sec.title} | ${formatSeconds(sec.start_seconds || 0)} |\n`;
+  });
+  md += `\n---\nSource: ${_currentVideoUrl}`;
+
+  navigator.clipboard.writeText(md)
+    .then(() => showToast('✓ Copied to clipboard'))
+    .catch(() => showToast('Copy failed — try again'));
+}
+
+// ─── Channel Analysis ─────────────────────────────────────
+async function analyzeChannel() {
+  const channelUrl = document.getElementById('channel-url').value.trim();
+  const maxVideos = parseInt(document.getElementById('max-videos').value) || 50;
+  const topN = parseInt(document.getElementById('top-n').value) || 3;
+
+  if (!channelUrl) { setError('channel', 'Please enter a channel URL'); return; }
+  if (topN > 10) { setError('channel', 'Top N must be 10 or fewer to avoid timeouts'); return; }
+
+  setError('channel', null);
+  document.getElementById('channel-results').classList.remove('visible');
+  setLoading('channel', true);
+  setBtn('channel', true);
+
+  try {
+    const res = await fetch('/api/channel/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channel_url: channelUrl, max_videos: maxVideos, top_n: topN }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setError('channel', data.error || `Server error ${res.status}`);
+      return;
+    }
+    renderChannelResults(data);
+  } catch (e) {
+    setError('channel', 'Network error: ' + e.message);
+  } finally {
+    setLoading('channel', false);
+    setBtn('channel', false);
+  }
+}
+
+function renderChannelResults(data) {
+  // Download links
+  document.getElementById('json-link').href = data.json_url;
+  document.getElementById('csv-link').href = data.csv_url;
+  document.getElementById('video-count-badge').textContent = `${data.count} videos enriched`;
+
+  // Video cards
+  const grid = document.getElementById('video-grid');
+  grid.innerHTML = data.videos.map((v, i) => {
+    const thumb = v.thumbnail
+      ? `<img src="${escapeHtml(v.thumbnail)}" alt="thumbnail" loading="lazy" onerror="this.style.display='none'">`
+      : `<div class="video-thumb-placeholder">▶</div>`;
+
+    const transcriptSnippet = v.transcript
+      ? escapeHtml(v.transcript.slice(0, 200)) + (v.transcript.length > 200 ? '…' : '')
+      : '<em style="color:var(--text-muted)">No transcript available</em>';
+
+    const engScore = v.engagement_score !== undefined
+      ? `${(v.engagement_score * 100).toFixed(2)}%`
+      : '—';
+
+    return `
+      <div class="video-card">
+        <div class="video-thumb">
+          ${thumb}
+          <span class="video-rank">#${i + 1}</span>
+        </div>
+        <div class="video-info">
+          <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" class="video-title">${escapeHtml(v.title || 'Untitled')}</a>
+          <div class="video-stats">
+            <span class="stat-pill">👁 <strong>${formatNumber(v.view_count)}</strong></span>
+            <span class="stat-pill">👍 <strong>${formatNumber(v.like_count)}</strong></span>
+            <span class="stat-pill">💬 <strong>${formatNumber(v.comment_count)}</strong></span>
+            <span class="stat-pill good">⚡ <strong>${engScore}</strong> engagement</span>
+          </div>
+          <div class="transcript-preview">${transcriptSnippet}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('channel-results').classList.add('visible');
+}
+
+// ─── XSS protection ──────────────────────────────────────
+function escapeHtml(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ─── Health check on load ─────────────────────────────────
+(async function checkHealth() {
+  try {
+    const res = await fetch('/api/health');
+    if (res.ok) {
+      const data = await res.json();
+      const label = document.getElementById('health-label');
+      label.textContent = data.openrouter_configured
+        ? 'AI + pipeline ready'
+        : 'Pipeline ready (no AI key)';
+    }
+  } catch (_) { /* silent */ }
+})();
+</script>
+</body>
+</html>
