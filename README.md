@@ -1,235 +1,233 @@
-# TubeIntel — AI Learning Companion for YouTube
+# TubeIntel
 
-A production-ready Flask app that turns YouTube channels and videos into structured knowledge.
-
-## What It Does
-
-| Feature | Input | Output |
-|---------|-------|--------|
-| **Channel Analysis** | Channel URL | Top N videos enriched with metadata, transcripts, engagement scores → JSON + CSV download |
-| **Video AI** | Single video URL | AI-generated summary, key insights, timestamped sections |
+A lightweight Flask API for YouTube channel and video intelligence — fetches metadata, transcripts, and engagement scores without the YouTube Data API.
 
 ---
 
-## Architecture
+## What It Does
 
+| Endpoint | Method | Description |
+|---|---|---|
+| `GET /api/health` | GET | Health check |
+| `/api/video/process` | POST | Enrich a single video (metadata + transcript) |
+| `/api/channel/analyze` | POST | Analyze top N videos from a channel |
+| `/downloads/<file>` | GET | Download saved JSON/CSV exports |
+
+---
+
+## Why It Was Broken (and What Was Fixed)
+
+The original code relied entirely on `yt-dlp` to resolve the `video_id` from a URL. On Render (and many cloud hosts), YouTube aggressively bot-detects `yt-dlp` requests, causing `extract_info` to return `{}` silently — leaving `video_id` as `null` and the transcript fetch never running.
+
+**Fix:** The `video_id` is now extracted directly from the URL using regex + `urllib.parse` (no network call required). This handles all standard YouTube URL formats:
+
+- `https://www.youtube.com/watch?v=VIDEO_ID`
+- `https://youtu.be/VIDEO_ID`
+- `https://www.youtube.com/shorts/VIDEO_ID`
+- `https://www.youtube.com/embed/VIDEO_ID`
+
+`yt-dlp` is still used for rich metadata (title, likes, description), but it's now **best-effort** — if it fails, the transcript is still fetched successfully using the URL-parsed ID.
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- Python 3.10+
+- pip
+
+### Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/YOUR_USERNAME/tubeintel.git
+cd tubeintel
+
+# Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate   # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run
+python app.py
 ```
-┌─────────────────────────────────────────────────────┐
-│                  index.html (browser)               │
-│   Tab 1: Video AI      │   Tab 2: Channel Analysis  │
-└───────────┬─────────────────────────┬───────────────┘
-            │ POST /api/video/process  │ POST /api/channel/analyze
-            ▼                          ▼
-┌─────────────────────────────────────────────────────┐
-│                   app.py (Flask)                    │
-│                                                     │
-│  DATA PIPELINE LAYER          AI LAYER              │
-│  ─────────────────────        ─────────────────     │
-│  get_channel_videos()         call_openrouter_ai()  │
-│  get_transcript()             (only in /video/proc) │
-│  enrich_video()                                     │
-│  save_to_json()                                     │
-│  save_to_csv()                                      │
-└──────────┬──────────────────────────┬───────────────┘
-           │                          │
-           ▼                          ▼
-      yt-dlp /                 OpenRouter API
-   youtube-transcript-api    (google/gemma-3-27b-it)
+
+Server starts on `http://localhost:8001`
+
+### Test locally
+
+```bash
+curl -X POST http://localhost:8001/api/video/process \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://www.youtube.com/watch?v=xAt1xcC6qfM"}'
 ```
 
 ---
 
 ## Deploy to Render
 
-### 1. Push to GitHub
+### Step 1 — Prepare your repo
 
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/YOUR_USERNAME/youtube-ai-companion.git
-git push -u origin main
+Make sure these files exist in the root of your GitHub repo:
+
+```
+app.py
+requirements.txt
+render.yaml          # optional but recommended
+index.html           # served at GET /
 ```
 
-### 2. Create Render Web Service
+Your `requirements.txt` should contain:
 
-1. Go to [render.com](https://render.com) → **New** → **Web Service**
-2. Connect your GitHub repository
-3. Set the following:
+```
+flask
+flask-cors
+yt-dlp
+youtube-transcript-api
+gunicorn
+```
+
+### Step 2 — Create a Web Service on Render
+
+1. Go to [https://dashboard.render.com](https://dashboard.render.com) and click **New → Web Service**
+2. Connect your GitHub repo
+3. Fill in the settings:
 
 | Setting | Value |
-|---------|-------|
-| **Environment** | Python 3 |
+|---|---|
+| **Name** | `tubeintel` (or your choice) |
+| **Region** | Oregon (US West) or nearest |
+| **Branch** | `main` |
+| **Runtime** | `Python 3` |
 | **Build Command** | `pip install -r requirements.txt` |
-| **Start Command** | `gunicorn app:app` |
-| **Instance Type** | Free (or Starter for longer timeouts) |
+| **Start Command** | `gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 2` |
+| **Instance Type** | Free (or Starter for better performance) |
 
-### 3. Set Environment Variables
+> **Why `--timeout 120`?** Transcript + metadata fetches can take 10–30 seconds per video. The default gunicorn timeout of 30s will kill those requests on the free tier. Set it to at least 120s.
 
-In the Render dashboard → your service → **Environment**:
+### Step 3 — Add Environment Variables (optional)
 
-| Key | Value |
-|-----|-------|
-| `OPENROUTER_API_KEY` | Your key from [openrouter.ai](https://openrouter.ai) |
+In **Render → Environment**, you can add:
 
-> Get your free API key at https://openrouter.ai → Keys
+| Variable | Default | Description |
+|---|---|---|
+| `PORT` | Set by Render automatically | Do not override |
+
+### Step 4 — Deploy
+
+Click **Deploy Web Service**. Render will install dependencies and start the server. First deploy takes ~2 minutes.
+
+### Step 5 — Verify
+
+```bash
+curl https://YOUR-APP.onrender.com/api/health
+# Expected: {"status":"ok","downloads":"/opt/render/project/src/downloads"}
+
+curl -X POST https://YOUR-APP.onrender.com/api/video/process \
+  -H 'Content-Type: application/json' \
+  -d '{"url":"https://www.youtube.com/watch?v=xAt1xcC6qfM"}'
+# Expected: JSON with video_id, transcript, metadata fields
+```
 
 ---
 
-## Local Development
+## Optional: render.yaml (Infrastructure as Code)
 
-```bash
-# Clone
-git clone https://github.com/YOUR_USERNAME/youtube-ai-companion.git
-cd youtube-ai-companion
+Add this file to your repo root to configure Render automatically:
 
-# Install
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-pip install -r requirements.txt
-
-# Run
-export OPENROUTER_API_KEY=sk-or-your-key-here
-python app.py
-
-# Open
-open http://localhost:5000
+```yaml
+services:
+  - type: web
+    name: tubeintel
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --timeout 120 --workers 2
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
 ```
 
 ---
 
 ## API Reference
 
-### `POST /api/channel/analyze`
+### `POST /api/video/process`
 
-Runs the full Colab pipeline: fetch → sort by views → enrich top N → export.
+Enrich a single YouTube video.
 
-```bash
-curl -X POST http://localhost:5000/api/channel/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "channel_url": "https://www.youtube.com/@rajshamani/videos",
-    "max_videos": 50,
-    "top_n": 3
-  }'
+**Request:**
+```json
+{ "url": "https://www.youtube.com/watch?v=VIDEO_ID" }
 ```
 
-Response:
+**Response:**
+```json
+{
+  "video_id": "xAt1xcC6qfM",
+  "url": "https://www.youtube.com/watch?v=xAt1xcC6qfM",
+  "title": "Video Title",
+  "description": "...",
+  "view_count": 123456,
+  "like_count": 4500,
+  "comment_count": 320,
+  "engagement_score": 0.03916,
+  "tags": ["tag1", "tag2"],
+  "categories": ["Education"],
+  "thumbnail": "https://...",
+  "uploader": "Channel Name",
+  "channel_id": "UCxxxxxxx",
+  "upload_date": "20240101",
+  "transcript": "Full transcript text joined into one string...",
+  "transcript_segments": [
+    { "text": "Hello", "start": 0.0, "duration": 1.5 }
+  ]
+}
+```
+
+> `transcript` and `transcript_segments` will be `null` if the video has no captions or captions are disabled.
+
+---
+
+### `POST /api/channel/analyze`
+
+Fetch and enrich the top N videos from a channel.
+
+**Request:**
+```json
+{
+  "channel_url": "https://www.youtube.com/@ChannelHandle",
+  "max_videos": 50,
+  "top_n": 3
+}
+```
+
+**Response:**
 ```json
 {
   "count": 3,
-  "videos": [
-    {
-      "title": "...",
-      "url": "...",
-      "video_id": "...",
-      "view_count": 7980694,
-      "like_count": 373910,
-      "comment_count": 26000,
-      "engagement_score": 0.05015,
-      "transcript": "France invented a lot...",
-      "transcript_segments": [...],
-      "thumbnail": "https://...",
-      "tags": [...],
-      "categories": [...]
-    }
-  ],
-  "json_url": "/downloads/videos_20260410_120000.json",
-  "csv_url": "/downloads/videos_20260410_120000.csv"
-}
-```
-
-### `POST /api/video/process`
-
-AI-powered analysis of a single video.
-
-```bash
-curl -X POST http://localhost:5000/api/video/process \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://www.youtube.com/watch?v=9QXCkMTbrSk"}'
-```
-
-Response:
-```json
-{
-  "video_id": "9QXCkMTbrSk",
-  "summary": "...",
-  "insights": ["Insight 1", "Insight 2", "..."],
-  "sections": [
-    {"title": "Introduction", "start_seconds": 0},
-    {"title": "Main Topic", "start_seconds": 145}
-  ],
-  "transcript_word_count": 5823
-}
-```
-
-### `GET /downloads/<filename>`
-
-Download generated files. Files must end in `.json` or `.csv`.
-
-### `GET /api/health`
-
-```json
-{
-  "status": "ok",
-  "openrouter_configured": true,
-  "downloads_dir": "/opt/render/project/src/downloads",
-  "cached_videos": 2
+  "videos": [ /* array of enriched video objects */ ],
+  "json_url": "/downloads/videos_20240410_120000.json",
+  "csv_url": "/downloads/videos_20240410_120000.csv"
 }
 ```
 
 ---
 
-## Known Limitations & Gotchas
+## Troubleshooting
 
-### ⚠ Ephemeral Disk (Important)
-Files in `downloads/` are stored on Render's ephemeral disk. They **will be deleted** on every redeploy or dyno restart. Download your files immediately after the analysis completes. For persistence, integrate S3 or Cloudflare R2.
-
-### ⏱ Channel Analysis Timeouts
-Each video enrichment makes 2 network requests (yt-dlp metadata + transcript API). For `top_n = 3`, expect **2–4 minutes**. For `top_n > 5`, you may hit Render's free tier 30-second HTTP timeout. Solutions:
-- Keep `top_n ≤ 5` on the free tier
-- Upgrade to Render Starter plan (no timeout limit)
-- Implement background jobs with polling (future enhancement)
-
-### 🔇 yt-dlp JS Runtime Warning
-On Render you will see in logs:
-```
-WARNING: No supported JavaScript runtime could be found.
-```
-This is **non-fatal** and expected. It affects some format lookups but not metadata extraction or transcript fetching. Safe to ignore.
-
-### 🌐 Transcript Availability
-Not all YouTube videos have transcripts. The app:
-1. Tries English first
-2. Falls back to any available language, translated to English
-3. Returns HTTP 404 if no transcript exists at all
-
-Videos with only auto-generated non-English transcripts (common for non-English channels) will still work via the translation fallback.
-
-### 💾 In-Memory Cache
-Video AI results are cached in memory (per-process). Cache is cleared on server restart. This means the same video won't be re-processed within a session, but will be on next deploy.
+| Symptom | Cause | Fix |
+|---|---|---|
+| `video_id: null`, `transcript: null` | yt-dlp blocked by YouTube | Already fixed — video_id now parsed from URL directly |
+| `transcript: null` only | Video has no English captions | Expected — some videos disable captions |
+| 502 on channel analyze | yt-dlp bot-detected on Render free tier | Try adding cookies or use Render Starter plan |
+| Request timeout (gunicorn) | Default 30s too short | Use `--timeout 120` in start command (see above) |
+| `downloads/` files missing after redeploy | Render ephemeral disk | Free tier has no persistent disk; use Render Disk add-on or export to S3 |
 
 ---
 
-## Project Structure
+## License
 
-```
-youtube-ai-companion/
-├── app.py              # Flask backend (data pipeline + AI layer + routes)
-├── index.html          # Frontend (HTML/CSS/JS, single file)
-├── requirements.txt    # Python dependencies (pinned versions)
-├── runtime.txt         # Python version for Render
-├── .gitignore
-├── README.md
-└── downloads/          # Generated at runtime (gitignored)
-```
-
----
-
-## Stack
-
-- **Backend**: Flask 2.3, Python 3.11
-- **YouTube data**: yt-dlp 2024.12, youtube-transcript-api 1.2.1
-- **AI**: OpenRouter → `google/gemma-3-27b-it:free`
-- **Deploy**: Render (gunicorn)
-- **Frontend**: Vanilla HTML/CSS/JS (zero dependencies)
+MIT
