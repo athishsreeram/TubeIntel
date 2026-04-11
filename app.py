@@ -8,6 +8,7 @@ This file is a server-adapted version of the provided Colab script.
 """
 
 import os
+import re
 import json
 import csv
 import logging
@@ -16,6 +17,7 @@ from datetime import datetime
 from threading import Lock
 from itertools import count
 from typing import List, Dict, Optional
+from urllib.parse import urlparse, parse_qs
 
 import yt_dlp
 from flask import Flask, request, jsonify, send_from_directory, abort
@@ -27,7 +29,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 log = logging.getLogger(__name__)
 
 # Quiet noisy third-party loggers
-# hide yt-dlp warnings (ffmpeg/js runtime messages) — user can enable by changing level
 logging.getLogger("yt_dlp").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -50,17 +51,55 @@ TRANSCRIPT_LANGS = ["en"]
 
 
 # -------------------------
-# Utility helpers (from Colab)
+# Utility helpers
 # -------------------------
 def format_timestamp() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
+def extract_video_id_from_url(url: str) -> Optional[str]:
+    """
+    Robustly extract YouTube video ID directly from the URL string.
+    Handles all common YouTube URL formats without needing yt-dlp:
+      - https://www.youtube.com/watch?v=VIDEO_ID
+      - https://youtu.be/VIDEO_ID
+      - https://www.youtube.com/embed/VIDEO_ID
+      - https://www.youtube.com/shorts/VIDEO_ID
+      - https://m.youtube.com/watch?v=VIDEO_ID
+    """
+    if not url:
+        return None
+
+    # youtu.be short links
+    short_match = re.search(r"youtu\.be/([A-Za-z0-9_-]{11})", url)
+    if short_match:
+        return short_match.group(1)
+
+    # embed / shorts / v= param
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+    if "v" in qs:
+        vid = qs["v"][0]
+        if re.match(r"^[A-Za-z0-9_-]{11}$", vid):
+            return vid
+
+    # /embed/ID or /shorts/ID or /v/ID
+    path_match = re.search(r"/(embed|shorts|v)/([A-Za-z0-9_-]{11})", parsed.path)
+    if path_match:
+        return path_match.group(2)
+
+    return None
+
+
 def safe_extract_info(url: str, ydl_opts: Optional[dict] = None) -> dict:
     opts = dict(ydl_opts or {})
     opts.update({"quiet": True, "skip_download": True, "ignoreerrors": True})
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        return ydl.extract_info(url, download=False) or {}
+    try:
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            return ydl.extract_info(url, download=False) or {}
+    except Exception as e:
+        log.warning("yt_dlp extract_info failed for %s: %s", url, e)
+        return {}
 
 
 # -------------------------
@@ -95,20 +134,23 @@ def get_channel_videos(channel_url: str, max_videos: Optional[int] = None) -> Li
 
 
 def get_transcript(video_id: str, langs: Optional[List[str]] = None) -> Optional[Dict]:
-    """Fetch transcript using youtube-transcript-api (Colab style).
+    """Fetch transcript using youtube-transcript-api.
 
     Returns dict { video_id, transcript, segments } or None on failure.
     """
+    if not video_id:
+        log.warning("get_transcript called with empty video_id — skipping")
+        return None
+
     if langs is None:
         langs = TRANSCRIPT_LANGS
+
     try:
         api = YouTubeTranscriptApi()
         transcript = api.fetch(video_id, languages=langs)
-        #  log.info("Transcript fetched for %s: %d segments  : %s   ", video_id, len(transcript), transcript)
-        # transcript items commonly expose .text, .start, .duration
         full_text = " ".join([t.text for t in transcript])
-        # log.info("Transcript full text for %s: %s ", video_id, len(full_text))
         segments = [{"text": t.text, "start": t.start, "duration": t.duration} for t in transcript]
+        log.info("Transcript fetched for %s: %d segments", video_id, len(segments))
         return {"video_id": video_id, "transcript": full_text, "segments": segments}
     except Exception as e:
         log.info("Transcript fetch failed for %s: %s", video_id, e)
@@ -118,31 +160,61 @@ def get_transcript(video_id: str, langs: Optional[List[str]] = None) -> Optional
 def enrich_video(video: Dict, langs: Optional[List[str]] = None) -> Dict:
     """Full metadata + transcript enrichment for a single video dict (in-place).
 
-    Expects `video` to contain at least `url` and `video_id`.
+    Expects `video` to contain at least `url`. video_id is resolved from URL
+    if not already present, so yt-dlp failures don't block transcript fetching.
     """
+    raw_url = video.get("url") or ""
+
+    # ── Step 1: Resolve video_id robustly ─────────────────────────────────────
+    # Always try URL parsing first (fast, no network, no bot-detection risk)
+    video_id = video.get("video_id") or extract_video_id_from_url(raw_url)
+
+    # Fall back to yt-dlp only if URL parsing didn't work
+    if not video_id:
+        try:
+            info = safe_extract_info(raw_url, {"noplaylist": True})
+            video_id = info.get("id") or info.get("video_id")
+        except Exception as e:
+            log.warning("yt-dlp video_id resolution failed: %s", e)
+
+    if not video_id:
+        log.error("Could not resolve video_id for URL: %s", raw_url)
+        video["video_id"] = None
+        video["transcript"] = None
+        video["transcript_segments"] = None
+        return video
+
+    video["video_id"] = video_id
+    canonical_url = f"https://www.youtube.com/watch?v={video_id}"
+    video["url"] = canonical_url
+
+    # ── Step 2: Enrich metadata via yt-dlp (best-effort) ─────────────────────
     try:
-        info = safe_extract_info(video.get("url") or f"https://www.youtube.com/watch?v={video.get('video_id')}")
+        info = safe_extract_info(canonical_url, {"noplaylist": True})
         if info:
             video["title"] = video.get("title") or info.get("title")
             video["description"] = info.get("description")
             video["like_count"] = info.get("like_count")
             video["comment_count"] = info.get("comment_count")
+            video["view_count"] = video.get("view_count") or info.get("view_count") or 0
             video["tags"] = info.get("tags") or []
             video["categories"] = info.get("categories") or []
             video["thumbnail"] = info.get("thumbnail")
             video["uploader"] = info.get("uploader")
             video["channel_id"] = info.get("channel_id")
-            views = video.get("view_count") or info.get("view_count") or 1
+            video["upload_date"] = info.get("upload_date")
+            views = video.get("view_count") or 1
             likes = video.get("like_count") or 0
             comments = video.get("comment_count") or 0
             video["engagement_score"] = round((likes + comments) / (views or 1), 5)
+        else:
+            log.warning("yt-dlp returned no metadata for %s — metadata fields will be null", video_id)
     except Exception as e:
-        log.warning("enrich_video metadata error for %s: %s", video.get("video_id"), e)
+        log.warning("enrich_video metadata error for %s: %s", video_id, e)
 
-    # transcript
+    # ── Step 3: Fetch transcript (video_id is guaranteed valid here) ──────────
     try:
-        tid = video.get("video_id")
-        transcript_data = get_transcript(tid, langs or TRANSCRIPT_LANGS)
+        transcript_data = get_transcript(video_id, langs or TRANSCRIPT_LANGS)
         if transcript_data:
             video["transcript"] = transcript_data["transcript"]
             video["transcript_segments"] = transcript_data["segments"]
@@ -150,7 +222,7 @@ def enrich_video(video: Dict, langs: Optional[List[str]] = None) -> Dict:
             video["transcript"] = None
             video["transcript_segments"] = None
     except Exception as e:
-        log.debug("transcript attach failed for %s: %s", video.get("video_id"), e)
+        log.warning("transcript attach failed for %s: %s", video_id, e)
         video["transcript"] = None
         video["transcript_segments"] = None
 
@@ -169,7 +241,6 @@ def save_to_json(videos: List[Dict]) -> str:
 def save_to_csv(videos: List[Dict]) -> str:
     fn = f"videos_{format_timestamp()}.csv"
     path = os.path.join(DOWNLOADS_DIR, fn)
-    # collect keys and prefer stable order
     preferred = ["video_id", "title", "url", "uploader", "view_count", "like_count", "comment_count", "duration", "engagement_score", "thumbnail"]
     all_keys = list({k for v in videos for k in v.keys()})
     keys = [k for k in preferred if k in all_keys] + [k for k in all_keys if k not in preferred]
@@ -246,15 +317,11 @@ def video_process():
     if not url:
         return jsonify({"error": "url is required"}), 400
 
-    # try to extract video id via yt-dlp quick info
-    try:
-        info = safe_extract_info(url, {"noplaylist": True})
-        vid = info.get("id") or info.get("video_id")
-    except Exception:
-        vid = None
+    # Resolve video_id immediately from URL — don't wait for yt-dlp
+    video_id = extract_video_id_from_url(url)
+    video = {"url": url, "video_id": video_id}
 
-    video = {"url": url, "video_id": vid}
-    log_step(f"Video process: enriching single video {vid or url}")
+    log_step(f"Video process: enriching single video {video_id or url}")
     try:
         enriched = enrich_video(video)
     except Exception as e:
