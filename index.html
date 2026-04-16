@@ -30,7 +30,6 @@
   --shadow-accent: 0 0 30px #00d4ff18;
 }
 
-/* ─── RESET ─────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body {
@@ -43,7 +42,6 @@ body {
   overflow-x: hidden;
 }
 
-/* ─── BACKGROUND TEXTURE ────────────────────────────────── */
 body::before {
   content: '';
   position: fixed;
@@ -55,7 +53,6 @@ body::before {
   z-index: 0;
 }
 
-/* ─── LAYOUT ─────────────────────────────────────────────── */
 .page-wrapper {
   position: relative;
   z-index: 1;
@@ -77,7 +74,6 @@ header {
   gap: 20px;
   flex-wrap: wrap;
 }
-.logo-block {}
 .logo-wordmark {
   font-family: var(--font-display);
   font-size: 28px;
@@ -89,8 +85,7 @@ header {
   gap: 10px;
 }
 .logo-dot {
-  width: 10px;
-  height: 10px;
+  width: 10px; height: 10px;
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 14px var(--accent);
@@ -186,8 +181,7 @@ header {
 }
 .card-title .accent-line {
   display: inline-block;
-  width: 24px;
-  height: 2px;
+  width: 24px; height: 2px;
   background: var(--accent);
   border-radius: 2px;
 }
@@ -202,9 +196,7 @@ header {
   margin-bottom: 8px;
   display: block;
 }
-input[type="text"],
-input[type="url"],
-input[type="number"] {
+input[type="text"], input[type="url"], input[type="number"] {
   width: 100%;
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -216,12 +208,8 @@ input[type="number"] {
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
 }
-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px #00d4ff18;
-}
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px #00d4ff18; }
 input::placeholder { color: var(--text-muted); }
-
 .field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -258,14 +246,6 @@ input::placeholder { color: var(--text-muted); }
   box-shadow: 0 4px 28px #00d4ff55;
   transform: translateY(-1px);
 }
-.btn-secondary {
-  background: var(--surface-2);
-  color: var(--text);
-  border: 1px solid var(--border-bright);
-}
-.btn-secondary:hover:not(:disabled) {
-  background: var(--border-bright);
-}
 .btn-ghost {
   background: transparent;
   color: var(--text-dim);
@@ -273,19 +253,13 @@ input::placeholder { color: var(--text-muted); }
   font-size: 12px;
   padding: 8px 16px;
 }
-.btn-ghost:hover:not(:disabled) {
-  color: var(--text);
-  border-color: var(--border-bright);
-}
+.btn-ghost:hover:not(:disabled) { color: var(--text); border-color: var(--border-bright); }
 .btn-download {
   background: #13261a;
   color: var(--accent-3);
   border: 1px solid #39ff9133;
 }
-.btn-download:hover:not(:disabled) {
-  background: #1a3324;
-  box-shadow: 0 2px 14px #39ff9122;
-}
+.btn-download:hover:not(:disabled) { background: #1a3324; box-shadow: 0 2px 14px #39ff9122; }
 
 /* ─── LOADING ────────────────────────────────────────────── */
 .loading-state {
@@ -300,8 +274,7 @@ input::placeholder { color: var(--text-muted); }
 }
 .loading-state.visible { display: flex; }
 .spinner {
-  width: 20px;
-  height: 20px;
+  width: 20px; height: 20px;
   border: 2px solid var(--border-bright);
   border-top-color: var(--accent);
   border-radius: 50%;
@@ -309,11 +282,7 @@ input::placeholder { color: var(--text-muted); }
   flex-shrink: 0;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-dim);
-}
+.loading-text { font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); }
 
 /* ─── ALERT ──────────────────────────────────────────────── */
 .alert {
@@ -326,19 +295,10 @@ input::placeholder { color: var(--text-muted); }
   line-height: 1.5;
 }
 .alert.visible { display: flex; align-items: flex-start; gap: 10px; }
-.alert-error {
-  background: #1f0a0a;
-  border: 1px solid #4d1414;
-  color: #ff8080;
-}
-.alert-warn {
-  background: #1a1408;
-  border: 1px solid #4d3a0a;
-  color: #ffcc66;
-}
+.alert-error { background: #1f0a0a; border: 1px solid #4d1414; color: #ff8080; }
 .alert-icon { font-size: 14px; flex-shrink: 0; }
 
-/* ─── RESULTS: VIDEO AI ──────────────────────────────────── */
+/* ─── VIDEO RESULTS ──────────────────────────────────────── */
 #video-results { display: none; margin-top: 24px; }
 #video-results.visible { display: block; }
 
@@ -360,40 +320,144 @@ input::placeholder { color: var(--text-muted); }
   border-radius: 20px;
 }
 
-.summary-text {
-  font-size: 14.5px;
-  line-height: 1.75;
-  color: var(--text);
-}
-.summary-text p { margin-bottom: 12px; }
-.summary-text p:last-child { margin-bottom: 0; }
-
-.insights-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.insights-list li {
-  display: flex;
-  gap: 12px;
+/* ─── VIDEO HERO (thumbnail + title) ────────────────────── */
+.video-hero {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 20px;
   align-items: flex-start;
-  font-size: 14px;
-  line-height: 1.5;
 }
-.insight-num {
+@media (max-width: 560px) { .video-hero { grid-template-columns: 1fr; } }
+.video-hero-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 28px;
+}
+.video-hero-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.video-hero-meta { display: flex; flex-direction: column; gap: 8px; }
+.video-hero-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
+.video-hero-title a { color: inherit; text-decoration: none; }
+.video-hero-title a:hover { color: var(--accent); }
+.video-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 4px;
+}
+.meta-chip {
   font-family: var(--font-mono);
   font-size: 11px;
-  font-weight: 500;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid #00d4ff22;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: 5px;
-  padding: 2px 7px;
-  flex-shrink: 0;
-  margin-top: 2px;
+  padding: 3px 9px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.meta-chip strong { color: var(--text-dim); font-weight: 500; }
+.meta-chip.highlight strong { color: var(--accent-3); }
+.transcript-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 4px;
+}
+.transcript-badge .lang-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-3);
+}
+.transcript-badge.auto .lang-dot { background: #ffcc66; }
+
+/* ─── DESCRIPTION ────────────────────────────────────────── */
+.description-text {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text-dim);
+  white-space: pre-line;
+}
+.description-text.collapsed {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.expand-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0 0;
+  display: block;
+}
+.expand-btn:hover { text-decoration: underline; }
+
+/* ─── TAGS ───────────────────────────────────────────────── */
+.tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tag-pill {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: var(--surface-2);
 }
 
+/* ─── TRANSCRIPT ─────────────────────────────────────────── */
+.transcript-block {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  max-height: 260px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.transcript-stats {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.transcript-stats span { display: flex; align-items: center; gap: 4px; }
+
+/* ─── SEGMENTS TABLE ─────────────────────────────────────── */
 .sections-table {
   width: 100%;
   border-collapse: collapse;
@@ -439,13 +503,9 @@ input::placeholder { color: var(--text-muted); }
   align-items: center;
   gap: 4px;
 }
-.jump-link:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-  background: var(--accent-dim);
-}
+.jump-link:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
 
-/* ─── RESULTS: CHANNEL ───────────────────────────────────── */
+/* ─── CHANNEL RESULTS ────────────────────────────────────── */
 #channel-results { display: none; margin-top: 24px; }
 #channel-results.visible { display: block; }
 
@@ -463,100 +523,60 @@ input::placeholder { color: var(--text-muted); }
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
-
-.video-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
+.video-grid { display: flex; flex-direction: column; gap: 16px; }
 .video-card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   overflow: hidden;
   display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 0;
+  grid-template-columns: 120px 1fr;
   transition: border-color 0.2s;
 }
 .video-card:hover { border-color: var(--border-bright); }
-
 .video-thumb {
   position: relative;
-  width: 100px;
-  height: 100%;
-  min-height: 80px;
-  overflow: hidden;
-  flex-shrink: 0;
+  width: 120px;
   background: var(--surface-2);
+  overflow: hidden;
 }
-.video-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
+.video-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .video-thumb-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-muted);
-  font-size: 24px;
+  width: 100%; height: 100%; min-height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 24px;
 }
 .video-rank {
-  position: absolute;
-  top: 6px;
-  left: 6px;
+  position: absolute; top: 6px; left: 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 10px; font-weight: 500;
   background: rgba(0,0,0,0.8);
   color: var(--accent);
   padding: 2px 6px;
   border-radius: 4px;
 }
-
 .video-info {
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: 14px 18px;
+  display: flex; flex-direction: column; gap: 7px;
   min-width: 0;
 }
 .video-title {
   font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 14px; font-weight: 600;
+  color: var(--text); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .video-title:hover { color: var(--accent); }
-.video-stats {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-}
+.video-stats { display: flex; gap: 14px; flex-wrap: wrap; }
 .stat-pill {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  font-size: 11px; color: var(--text-muted);
+  display: flex; align-items: center; gap: 4px;
 }
 .stat-pill strong { color: var(--text-dim); font-weight: 500; }
 .stat-pill.good strong { color: var(--accent-3); }
-
 .transcript-preview {
-  font-size: 12.5px;
-  color: var(--text-muted);
-  line-height: 1.5;
+  font-size: 12px; color: var(--text-muted); line-height: 1.5;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -564,71 +584,41 @@ input::placeholder { color: var(--text-muted); }
   font-style: italic;
 }
 
-/* ─── WARN NOTICE ────────────────────────────────────────── */
+/* ─── NOTICE ─────────────────────────────────────────────── */
 .notice {
   font-family: var(--font-mono);
-  font-size: 11px;
-  color: #c98a1a;
-  background: #18130500;
+  font-size: 11px; color: #c98a1a;
   border: 1px solid #3d2e0a;
   border-radius: var(--radius);
-  padding: 10px 14px;
-  margin-top: 12px;
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
+  padding: 10px 14px; margin-top: 12px;
+  display: flex; gap: 8px; align-items: flex-start;
   line-height: 1.5;
 }
 
 /* ─── FOOTER ─────────────────────────────────────────────── */
 footer {
   border-top: 1px solid var(--border);
-  margin-top: 80px;
-  padding-top: 24px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
+  margin-top: 80px; padding-top: 24px;
+  display: flex; justify-content: space-between;
+  align-items: center; flex-wrap: wrap; gap: 12px;
 }
-.footer-text {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-}
-.footer-stack {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+.footer-text { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); }
+.footer-stack { display: flex; gap: 8px; flex-wrap: wrap; }
 .stack-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  letter-spacing: 0.5px;
+  font-family: var(--font-mono); font-size: 10px;
+  padding: 3px 8px; border-radius: 4px;
+  border: 1px solid var(--border); color: var(--text-muted);
 }
 
-/* ─── COPY TOAST ─────────────────────────────────────────── */
+/* ─── TOAST ──────────────────────────────────────────────── */
 .toast {
-  position: fixed;
-  bottom: 28px;
-  right: 28px;
-  background: var(--accent-3);
-  color: #000;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 10px 18px;
-  border-radius: 8px;
-  box-shadow: var(--shadow);
-  opacity: 0;
-  transform: translateY(10px);
-  transition: all 0.25s;
-  pointer-events: none;
-  z-index: 999;
+  position: fixed; bottom: 28px; right: 28px;
+  background: var(--accent-3); color: #000;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 500;
+  padding: 10px 18px; border-radius: 8px;
+  box-shadow: var(--shadow); opacity: 0;
+  transform: translateY(10px); transition: all 0.25s;
+  pointer-events: none; z-index: 999;
 }
 .toast.show { opacity: 1; transform: translateY(0); }
 
@@ -641,9 +631,9 @@ footer {
 </style>
 </head>
 <body>
-
 <div class="page-wrapper">
-  <!-- ─── HEADER ─────────────────────────────────────────── -->
+
+  <!-- HEADER -->
   <header>
     <div class="header-inner">
       <div class="logo-block">
@@ -654,13 +644,13 @@ footer {
         <div class="logo-sub">AI Learning Companion for YouTube</div>
       </div>
       <div class="health-badge">
-        <div class="dot"></div>
-        <span id="health-label">System online</span>
+        <div class="dot" id="health-dot"></div>
+        <span id="health-label">Checking…</span>
       </div>
     </div>
   </header>
 
-  <!-- ─── TABS ──────────────────────────────────────────── -->
+  <!-- TABS -->
   <div class="tabs">
     <button class="tab-btn active" onclick="switchTab('video', this)">
       <span class="icon">🧠</span> Video AI
@@ -670,9 +660,9 @@ footer {
     </button>
   </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       PANEL 1: SINGLE VIDEO AI
-  ════════════════════════════════════════════════════════ -->
+  <!-- ══════════════════════════════════════════════
+       PANEL 1 — VIDEO AI
+  ══════════════════════════════════════════════ -->
   <div id="panel-video" class="panel active">
 
     <div class="card">
@@ -681,7 +671,7 @@ footer {
       <input type="url" id="video-url" placeholder="https://www.youtube.com/watch?v=…"
              onkeydown="if(event.key==='Enter') analyzeVideo()">
       <button class="btn btn-primary" onclick="analyzeVideo()" id="video-btn">
-        ⚡ Analyze with AI
+        ⚡ Analyze Video
       </button>
     </div>
 
@@ -695,28 +685,54 @@ footer {
       <span id="video-error-msg"></span>
     </div>
 
+    <!-- Results: rendered from actual API fields -->
     <div id="video-results">
+
       <div class="result-header">
         <span class="result-badge" id="video-id-badge"></span>
         <button class="btn btn-ghost" onclick="copyMarkdown()">📋 Copy as Markdown</button>
       </div>
 
+      <!-- Card 1: Video overview (thumbnail + title + all stats) -->
       <div class="card">
-        <div class="card-title"><span class="accent-line"></span> Summary</div>
-        <div class="summary-text" id="summary-text"></div>
+        <div class="card-title"><span class="accent-line"></span> Overview</div>
+        <div class="video-hero">
+          <div class="video-hero-thumb" id="video-thumb-wrap">▶</div>
+          <div class="video-hero-meta">
+            <div class="video-hero-title" id="video-hero-title">—</div>
+            <div class="video-meta-row" id="video-meta-row"></div>
+            <div id="transcript-badge-wrap"></div>
+          </div>
+        </div>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span class="accent-line"></span> Key Insights</div>
-        <ul class="insights-list" id="insights-list"></ul>
+      <!-- Card 2: Description -->
+      <div class="card" id="desc-card">
+        <div class="card-title"><span class="accent-line"></span> Description</div>
+        <div class="description-text collapsed" id="description-text"></div>
+        <button class="expand-btn" id="expand-desc-btn" onclick="toggleDesc()">Show more ↓</button>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span class="accent-line"></span> Sections</div>
+      <!-- Card 3: Tags / Categories -->
+      <div class="card" id="tags-card">
+        <div class="card-title"><span class="accent-line"></span> Tags &amp; Categories</div>
+        <div class="tags-list" id="tags-list"></div>
+      </div>
+
+      <!-- Card 4: Full transcript -->
+      <div class="card" id="transcript-card">
+        <div class="card-title"><span class="accent-line"></span> Transcript</div>
+        <div class="transcript-stats" id="transcript-stats"></div>
+        <div class="transcript-block" id="transcript-block"></div>
+      </div>
+
+      <!-- Card 5: Transcript segments (timestamped) -->
+      <div class="card" id="segments-card">
+        <div class="card-title"><span class="accent-line"></span> Transcript Segments</div>
         <table class="sections-table">
           <thead>
             <tr>
-              <th>Title</th>
+              <th>Text</th>
               <th>Timestamp</th>
               <th>Jump to</th>
             </tr>
@@ -724,12 +740,13 @@ footer {
           <tbody id="sections-body"></tbody>
         </table>
       </div>
-    </div>
-  </div>
 
-  <!-- ═══════════════════════════════════════════════════════
-       PANEL 2: CHANNEL ANALYSIS
-  ════════════════════════════════════════════════════════ -->
+    </div><!-- /video-results -->
+  </div><!-- /panel-video -->
+
+  <!-- ══════════════════════════════════════════════
+       PANEL 2 — CHANNEL ANALYSIS
+  ══════════════════════════════════════════════ -->
   <div id="panel-channel" class="panel">
 
     <div class="card">
@@ -770,6 +787,7 @@ footer {
     <div id="channel-results">
       <div class="downloads-bar">
         <span class="downloads-label">Download dataset:</span>
+        <!-- href set dynamically from data.json_url / data.csv_url -->
         <a id="json-link" href="#" class="btn btn-download">⬇ JSON</a>
         <a id="csv-link" href="#" class="btn btn-download">⬇ CSV</a>
         <span id="video-count-badge" class="result-badge"></span>
@@ -778,32 +796,27 @@ footer {
     </div>
   </div>
 
-  <!-- ─── FOOTER ─────────────────────────────────────────── -->
+  <!-- FOOTER -->
   <footer>
     <div class="footer-text">TubeIntel — AI Learning Companion</div>
     <div class="footer-stack">
       <span class="stack-tag">Flask</span>
       <span class="stack-tag">yt-dlp</span>
       <span class="stack-tag">youtube-transcript-api</span>
-      <span class="stack-tag">OpenRouter</span>
       <span class="stack-tag">Render</span>
     </div>
   </footer>
 </div>
 
-<!-- Toast notification -->
 <div class="toast" id="toast"></div>
 
-<!-- ─────────────────────────────────────────────────────────
-     JAVASCRIPT — API consumer only, no business logic
-────────────────────────────────────────────────────────── -->
 <script>
-// ─── State ───────────────────────────────────────────────
+// ─── State ──────────────────────────────────────────────
 let _currentVideoResult = null;
-let _currentVideoId = null;
-let _currentVideoUrl = null;
+let _currentVideoUrl    = null;
+let _descExpanded       = false;
 
-// ─── Tab switching ────────────────────────────────────────
+// ─── Tab switching ───────────────────────────────────────
 function switchTab(tab, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -811,7 +824,7 @@ function switchTab(tab, btn) {
   btn.classList.add('active');
 }
 
-// ─── Toast ────────────────────────────────────────────────
+// ─── Toast ───────────────────────────────────────────────
 function showToast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -820,44 +833,54 @@ function showToast(msg) {
   t._hideTimer = setTimeout(() => t.classList.remove('show'), 2200);
 }
 
-// ─── Helpers ──────────────────────────────────────────────
+// ─── UI helpers ──────────────────────────────────────────
 function setLoading(id, on) {
   const el = document.getElementById(id + '-loading');
-  if (on) el.classList.add('visible'); else el.classList.remove('visible');
+  on ? el.classList.add('visible') : el.classList.remove('visible');
 }
-
 function setError(id, msg) {
-  const el = document.getElementById(id + '-error');
+  const el    = document.getElementById(id + '-error');
   const msgEl = document.getElementById(id + '-error-msg');
-  if (msg) {
-    msgEl.textContent = msg;
-    el.classList.add('visible');
-  } else {
-    el.classList.remove('visible');
-  }
+  if (msg) { msgEl.textContent = msg; el.classList.add('visible'); }
+  else      { el.classList.remove('visible'); }
 }
-
 function setBtn(id, disabled) {
   document.getElementById(id + '-btn').disabled = disabled;
 }
 
+// ─── Formatters ──────────────────────────────────────────
 function formatSeconds(secs) {
-  const s = Math.round(secs);
+  const s = Math.round(secs || 0);
   const h = Math.floor(s / 3600);
   const m = Math.floor((s % 3600) / 60);
   const sc = s % 60;
   if (h > 0) return `${h}:${String(m).padStart(2,'0')}:${String(sc).padStart(2,'0')}`;
   return `${m}:${String(sc).padStart(2,'0')}`;
 }
-
 function formatNumber(n) {
-  if (!n && n !== 0) return '—';
+  if (n == null) return '—';
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
-  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'K';
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
   return String(n);
 }
+/**
+ * upload_date from yt-dlp is "YYYYMMDD" string.
+ * Converts to "Apr 15, 2025" style.
+ */
+function formatUploadDate(s) {
+  if (!s || s.length !== 8) return s || '—';
+  const y = s.slice(0, 4), mo = s.slice(4, 6), d = s.slice(6, 8);
+  const dt = new Date(`${y}-${mo}-${d}`);
+  return dt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+function esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
 
-// ─── Video AI ─────────────────────────────────────────────
+// ─── Analyze single video ────────────────────────────────
 async function analyzeVideo() {
   const url = document.getElementById('video-url').value.trim();
   if (!url) { setError('video', 'Please enter a YouTube URL'); return; }
@@ -867,30 +890,39 @@ async function analyzeVideo() {
   setLoading('video', true);
   setBtn('video', true);
 
-  // Animated loading messages
-  const msgs = ['Extracting video ID…', 'Fetching transcript…', 'Running AI analysis…', 'Structuring insights…'];
+  const msgs = [
+    'Extracting video ID…',
+    'Fetching metadata…',
+    'Fetching transcript…',
+    'Processing…',
+  ];
   let mi = 0;
   const msgEl = document.getElementById('video-loading-text');
   const msgTimer = setInterval(() => {
     mi = (mi + 1) % msgs.length;
     msgEl.textContent = msgs[mi];
-  }, 2200);
+  }, 2500);
 
   try {
-    const res = await fetch('/api/video/process', {
+    // POST /api/video/process → returns enriched video object
+    // Fields: video_id, url, title, description, uploader, channel_id,
+    //         view_count, like_count, comment_count, engagement_score,
+    //         duration, upload_date, thumbnail, tags[], categories[],
+    //         transcript, transcript_segments[], transcript_language,
+    //         transcript_is_generated
+    const res  = await fetch('/api/video/process', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url }),
     });
     const data = await res.json();
     if (!res.ok) {
-      setError('video', data.detail || data.error || `Server error ${res.status}`);
+      setError('video', data.error || `Server error ${res.status}`);
       return;
     }
     _currentVideoResult = data;
-    _currentVideoId = data.video_id;
-    _currentVideoUrl = url;
-    renderVideoResults(data, url);
+    _currentVideoUrl    = url;
+    renderVideoResults(data);
   } catch (e) {
     setError('video', 'Network error: ' + e.message);
   } finally {
@@ -900,94 +932,180 @@ async function analyzeVideo() {
   }
 }
 
-function renderVideoResults(data, url) {
-  // Badge
-  const tw = (data.transcript_word_count !== undefined && data.transcript_word_count !== null) ? data.transcript_word_count.toLocaleString() : '?';
-  document.getElementById('video-id-badge').textContent = `video_id: ${data.video_id} · ${tw} words`;
-  // Video details / stats
-  const summaryEl = document.getElementById('summary-text');
-  const desc = data.description || '';
-  const descPreview = desc ? desc.split('\n').slice(0,3).map(d => `<p>${escapeHtml(d)}</p>`).join('') : '';
-  // If no description, show transcript preview
-  const transcriptPreview = data.transcript ? escapeHtml(data.transcript.slice(0,800)) : '';
-  summaryEl.innerHTML = descPreview || `<p>${transcriptPreview || 'No description or transcript available.'}</p>`;
+function renderVideoResults(d) {
+  const vidUrl = d.url || _currentVideoUrl;
 
-  // Stats into insights-list (reusing the UI element)
-  const insightsList = document.getElementById('insights-list');
-  const stats = [];
-  const uploader = data.uploader || '—';
-  const views = (data.view_count !== undefined && data.view_count !== null) ? data.view_count.toLocaleString() : '—';
-  const likes = (data.like_count !== undefined && data.like_count !== null) ? data.like_count.toLocaleString() : '—';
-  const comments = (data.comment_count !== undefined && data.comment_count !== null) ? data.comment_count.toLocaleString() : '—';
-  const engagement = (data.engagement_score !== undefined && data.engagement_score !== null) ? (data.engagement_score * 100).toFixed(2) + '%' : '—';
-  const durationStr = data.duration ? formatSeconds(data.duration) : '—';
-  stats.push(['Uploader', uploader]);
-  stats.push(['Views', views]);
-  stats.push(['Likes', likes]);
-  stats.push(['Comments', comments]);
-  stats.push(['Engagement', engagement]);
-  stats.push(['Duration', durationStr]);
-  insightsList.innerHTML = stats.map((s, i) => `
-    <li>
-      <span class="insight-num">${String(i + 1).padStart(2, '0')}</span>
-      <span><strong>${escapeHtml(s[0])}:</strong> ${escapeHtml(String(s[1]))}</span>
-    </li>
+  // ── Badge (video_id + word count computed from transcript) ──
+  const wordCount = d.transcript ? d.transcript.trim().split(/\s+/).length : 0;
+  document.getElementById('video-id-badge').textContent =
+    `${d.video_id || '—'} · ${wordCount.toLocaleString()} words`;
+
+  // ── Thumbnail ────────────────────────────────────────────
+  const thumbWrap = document.getElementById('video-thumb-wrap');
+  thumbWrap.innerHTML = d.thumbnail
+    ? `<img src="${esc(d.thumbnail)}" alt="thumbnail" onerror="this.parentElement.innerHTML='▶'">`
+    : '▶';
+
+  // ── Title (linked) ───────────────────────────────────────
+  document.getElementById('video-hero-title').innerHTML = d.title
+    ? `<a href="${esc(vidUrl)}" target="_blank" rel="noopener">${esc(d.title)}</a>`
+    : '—';
+
+  // ── Meta chips: uploader, views, likes, comments, engagement, duration, date ──
+  const chips = [];
+  if (d.uploader)        chips.push(['👤', 'Uploader',   esc(d.uploader), false]);
+  if (d.view_count != null) chips.push(['👁', 'Views',  formatNumber(d.view_count), false]);
+  if (d.like_count != null) chips.push(['👍', 'Likes',  formatNumber(d.like_count), false]);
+  if (d.comment_count != null) chips.push(['💬', 'Comments', formatNumber(d.comment_count), false]);
+  if (d.engagement_score != null) chips.push(['⚡', 'Engagement', (d.engagement_score * 100).toFixed(3) + '%', true]);
+  if (d.duration)        chips.push(['⏱', 'Duration',  formatSeconds(d.duration), false]);
+  if (d.upload_date)     chips.push(['📅', 'Published', formatUploadDate(d.upload_date), false]);
+
+  document.getElementById('video-meta-row').innerHTML = chips.map(([icon, label, val, hi]) => `
+    <div class="meta-chip ${hi ? 'highlight' : ''}">
+      ${icon} <span>${label}:</span> <strong>${val}</strong>
+    </div>
   `).join('');
 
-  // Sections: show top transcript segments if available
-  const sectionsBody = document.getElementById('sections-body');
-  const baseYtUrl = `https://www.youtube.com/watch?v=${data.video_id}`;
-  const segments = data.transcript_segments || [];
-  sectionsBody.innerHTML = (segments.slice(0,8).map(seg => {
-    const start = Math.round(seg.start || 0);
-    const ts = formatSeconds(start);
-    const jumpUrl = `${baseYtUrl}&t=${start}`;
-    const title = (seg.text || '').slice(0,120);
-    return `
-      <tr>
-        <td>${escapeHtml(title)}</td>
-        <td><span class="ts-badge">${ts}</span></td>
-        <td>
-          <a href="${jumpUrl}" target="_blank" rel="noopener" class="jump-link">▶ Watch</a>
-        </td>
-      </tr>
+  // ── Transcript language badge ────────────────────────────
+  const badgeWrap = document.getElementById('transcript-badge-wrap');
+  if (d.transcript_language) {
+    const isAuto = d.transcript_is_generated;
+    badgeWrap.innerHTML = `
+      <div class="transcript-badge ${isAuto ? 'auto' : ''}">
+        <div class="lang-dot"></div>
+        lang: <strong>${esc(d.transcript_language)}</strong>
+        &nbsp;·&nbsp; ${isAuto ? 'auto-generated' : 'manual'}
+      </div>`;
+  } else {
+    badgeWrap.innerHTML = '';
+  }
+
+  // ── Description ──────────────────────────────────────────
+  const descCard = document.getElementById('desc-card');
+  const descEl   = document.getElementById('description-text');
+  const descBtn  = document.getElementById('expand-desc-btn');
+  if (d.description && d.description.trim()) {
+    descEl.textContent  = d.description;
+    descEl.classList.add('collapsed');
+    _descExpanded       = false;
+    descBtn.textContent = 'Show more ↓';
+    descCard.style.display = '';
+  } else {
+    descCard.style.display = 'none';
+  }
+
+  // ── Tags & Categories ────────────────────────────────────
+  const tagsCard = document.getElementById('tags-card');
+  const tagsList = document.getElementById('tags-list');
+  const allTags  = [
+    ...(d.categories || []).map(c => `📁 ${c}`),
+    ...(d.tags || []).slice(0, 20),
+  ];
+  if (allTags.length) {
+    tagsList.innerHTML   = allTags.map(t => `<span class="tag-pill">${esc(t)}</span>`).join('');
+    tagsCard.style.display = '';
+  } else {
+    tagsCard.style.display = 'none';
+  }
+
+  // ── Transcript full text ─────────────────────────────────
+  const transcriptCard  = document.getElementById('transcript-card');
+  const transcriptStats = document.getElementById('transcript-stats');
+  const transcriptBlock = document.getElementById('transcript-block');
+  if (d.transcript) {
+    const segCount = (d.transcript_segments || []).length;
+    transcriptStats.innerHTML = `
+      <span>📝 <strong>${wordCount.toLocaleString()}</strong> words</span>
+      <span>🎞 <strong>${segCount.toLocaleString()}</strong> segments</span>
+      ${d.duration ? `<span>⏱ <strong>${formatSeconds(d.duration)}</strong> duration</span>` : ''}
     `;
-  }).join('')) || '<tr><td colspan="3" style="color:var(--text-dim)">No transcript segments available</td></tr>';
+    transcriptBlock.textContent = d.transcript;
+    transcriptCard.style.display = '';
+  } else {
+    transcriptBlock.textContent = '';
+    transcriptStats.innerHTML   = '';
+    transcriptCard.style.display = 'none';
+  }
+
+  // ── Transcript segments (timestamped) ────────────────────
+  const segmentsCard = document.getElementById('segments-card');
+  const sectionsBody = document.getElementById('sections-body');
+  const segments     = d.transcript_segments || [];
+  const baseUrl      = `https://www.youtube.com/watch?v=${d.video_id}`;
+
+  if (segments.length) {
+    // Show every ~30 segments to give a good spread across the full video
+    const stride = Math.max(1, Math.floor(segments.length / 20));
+    const picked = segments.filter((_, i) => i % stride === 0).slice(0, 20);
+
+    sectionsBody.innerHTML = picked.map(seg => {
+      const start   = Math.round(seg.start || 0);
+      const ts      = formatSeconds(start);
+      const jumpUrl = `${baseUrl}&t=${start}`;
+      const text    = (seg.text || '').slice(0, 120);
+      return `
+        <tr>
+          <td>${esc(text)}</td>
+          <td><span class="ts-badge">${ts}</span></td>
+          <td><a href="${esc(jumpUrl)}" target="_blank" rel="noopener" class="jump-link">▶ Watch</a></td>
+        </tr>`;
+    }).join('');
+    segmentsCard.style.display = '';
+  } else {
+    segmentsCard.style.display = 'none';
+  }
 
   document.getElementById('video-results').classList.add('visible');
+  document.getElementById('video-results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-// ─── Copy as Markdown ─────────────────────────────────────
+// ─── Toggle description collapse ────────────────────────
+function toggleDesc() {
+  const el  = document.getElementById('description-text');
+  const btn = document.getElementById('expand-desc-btn');
+  _descExpanded = !_descExpanded;
+  el.classList.toggle('collapsed', !_descExpanded);
+  btn.textContent = _descExpanded ? 'Show less ↑' : 'Show more ↓';
+}
+
+// ─── Copy as Markdown ────────────────────────────────────
 function copyMarkdown() {
   if (!_currentVideoResult) return;
   const d = _currentVideoResult;
   let md = `# ${d.title || 'Video'}\n\n`;
-  md += `**URL:** ${_currentVideoUrl}\n\n`;
-  md += `**Uploader:** ${d.uploader || '—'}  \n`;
-  const _views = (d.view_count !== undefined && d.view_count !== null) ? d.view_count.toLocaleString() : '—';
-  const _likes = (d.like_count !== undefined && d.like_count !== null) ? d.like_count.toLocaleString() : '—';
-  const _comments = (d.comment_count !== undefined && d.comment_count !== null) ? d.comment_count.toLocaleString() : '—';
-  md += `**Views:** ${_views}  \n`;
-  md += `**Likes:** ${_likes}  \n`;
-  md += `**Comments:** ${_comments}  \n`;
-  if (d.transcript) {
-    md += `\n## Transcript (preview)\n\n`;
-    md += d.transcript.slice(0,1000) + (d.transcript.length > 1000 ? '\n\n... (truncated)' : '') + '\n';
+  md += `**URL:** ${d.url || _currentVideoUrl}\n`;
+  md += `**Video ID:** ${d.video_id || '—'}\n`;
+  md += `**Uploader:** ${d.uploader || '—'}\n`;
+  md += `**Published:** ${formatUploadDate(d.upload_date)}\n`;
+  md += `**Duration:** ${formatSeconds(d.duration)}\n`;
+  md += `**Views:** ${formatNumber(d.view_count)}\n`;
+  md += `**Likes:** ${formatNumber(d.like_count)}\n`;
+  md += `**Comments:** ${formatNumber(d.comment_count)}\n`;
+  md += `**Engagement:** ${d.engagement_score != null ? (d.engagement_score * 100).toFixed(3) + '%' : '—'}\n`;
+  if (d.transcript_language) {
+    md += `**Transcript lang:** ${d.transcript_language} (${d.transcript_is_generated ? 'auto' : 'manual'})\n`;
   }
-
+  if (d.description) {
+    md += `\n## Description\n\n${d.description}\n`;
+  }
+  if (d.transcript) {
+    const wordCount = d.transcript.trim().split(/\s+/).length;
+    md += `\n## Full Transcript (${wordCount.toLocaleString()} words)\n\n${d.transcript}\n`;
+  }
   navigator.clipboard.writeText(md)
     .then(() => showToast('✓ Copied to clipboard'))
     .catch(() => showToast('Copy failed — try again'));
 }
 
-// ─── Channel Analysis ─────────────────────────────────────
+// ─── Channel analysis ────────────────────────────────────
 async function analyzeChannel() {
   const channelUrl = document.getElementById('channel-url').value.trim();
-  const maxVideos = parseInt(document.getElementById('max-videos').value) || 50;
-  const topN = parseInt(document.getElementById('top-n').value) || 3;
+  const maxVideos  = parseInt(document.getElementById('max-videos').value) || 50;
+  const topN       = parseInt(document.getElementById('top-n').value) || 3;
 
   if (!channelUrl) { setError('channel', 'Please enter a channel URL'); return; }
-  if (topN > 10) { setError('channel', 'Top N must be 10 or fewer to avoid timeouts'); return; }
+  if (topN > 10)   { setError('channel', 'Top N must be 10 or fewer'); return; }
 
   setError('channel', null);
   document.getElementById('channel-results').classList.remove('visible');
@@ -995,7 +1113,9 @@ async function analyzeChannel() {
   setBtn('channel', true);
 
   try {
-    const res = await fetch('/api/channel/analyze', {
+    // POST /api/channel/analyze → { videos[], json_url, csv_url, count }
+    // Each video has all the same fields as enrich_video returns
+    const res  = await fetch('/api/channel/analyze', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ channel_url: channelUrl, max_videos: maxVideos, top_n: topN }),
@@ -1015,25 +1135,26 @@ async function analyzeChannel() {
 }
 
 function renderChannelResults(data) {
-  // Download links
+  // data.json_url and data.csv_url are relative paths like "/downloads/videos_xxx.json"
   document.getElementById('json-link').href = data.json_url;
-  document.getElementById('csv-link').href = data.csv_url;
-  document.getElementById('video-count-badge').textContent = `${data.count} videos enriched`;
+  document.getElementById('csv-link').href  = data.csv_url;
+  document.getElementById('video-count-badge').textContent = `${data.count} video${data.count !== 1 ? 's' : ''} enriched`;
 
-  // Video cards
   const grid = document.getElementById('video-grid');
   grid.innerHTML = data.videos.map((v, i) => {
     const thumb = v.thumbnail
-      ? `<img src="${escapeHtml(v.thumbnail)}" alt="thumbnail" loading="lazy" onerror="this.style.display='none'">`
+      ? `<img src="${esc(v.thumbnail)}" alt="thumbnail" loading="lazy" onerror="this.style.display='none'">`
       : `<div class="video-thumb-placeholder">▶</div>`;
 
     const transcriptSnippet = v.transcript
-      ? escapeHtml(v.transcript.slice(0, 200)) + (v.transcript.length > 200 ? '…' : '')
-      : '<em style="color:var(--text-muted)">No transcript available</em>';
+      ? esc(v.transcript.slice(0, 200)) + (v.transcript.length > 200 ? '…' : '')
+      : '<em style="color:var(--text-muted)">No transcript</em>';
 
-    const engScore = v.engagement_score !== undefined
-      ? `${(v.engagement_score * 100).toFixed(2)}%`
+    const engScore = v.engagement_score != null
+      ? `${(v.engagement_score * 100).toFixed(3)}%`
       : '—';
+
+    const date = v.upload_date ? `· ${formatUploadDate(v.upload_date)}` : '';
 
     return `
       <div class="video-card">
@@ -1042,52 +1163,52 @@ function renderChannelResults(data) {
           <span class="video-rank">#${i + 1}</span>
         </div>
         <div class="video-info">
-          <a href="${escapeHtml(v.url)}" target="_blank" rel="noopener" class="video-title">${escapeHtml(v.title || 'Untitled')}</a>
+          <a href="${esc(v.url)}" target="_blank" rel="noopener" class="video-title"
+             title="${esc(v.title || '')}">${esc(v.title || 'Untitled')}</a>
           <div class="video-stats">
             <span class="stat-pill">👁 <strong>${formatNumber(v.view_count)}</strong></span>
             <span class="stat-pill">👍 <strong>${formatNumber(v.like_count)}</strong></span>
             <span class="stat-pill">💬 <strong>${formatNumber(v.comment_count)}</strong></span>
-            <span class="stat-pill good">⚡ <strong>${engScore}</strong> engagement</span>
+            <span class="stat-pill good">⚡ <strong>${engScore}</strong></span>
+            ${v.duration ? `<span class="stat-pill">⏱ <strong>${formatSeconds(v.duration)}</strong></span>` : ''}
+            ${v.upload_date ? `<span class="stat-pill">📅 <strong>${formatUploadDate(v.upload_date)}</strong></span>` : ''}
           </div>
           <div class="transcript-preview">${transcriptSnippet}</div>
         </div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
   document.getElementById('channel-results').classList.add('visible');
 }
 
-// ─── XSS protection ──────────────────────────────────────
-function escapeHtml(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-// ─── Health check on load ─────────────────────────────────
+// ─── Health check ────────────────────────────────────────
+// /api/health returns: { status, downloads, cookies_loaded }
+// Note: no "openrouter_configured" field — use cookies_loaded instead
 (async function checkHealth() {
+  const dot   = document.getElementById('health-dot');
+  const label = document.getElementById('health-label');
   try {
-    const res = await fetch('/api/health');
+    const res  = await fetch('/api/health');
     if (res.ok) {
       const data = await res.json();
-      const label = document.getElementById('health-label');
-      const dot = document.querySelector('.health-badge .dot');
-      if (data.openrouter_configured) {
-        label.textContent = 'AI + pipeline ready';
-        dot.style.background = 'linear-gradient(90deg,#39ff91,#00d4ff)';
-        dot.style.boxShadow = '0 0 10px #39ff9133';
-      } else {
-        label.textContent = 'Pipeline ready (no AI key)';
-        dot.style.background = '#ffcc66';
-        dot.style.boxShadow = 'none';
+      if (data.status === 'ok') {
+        if (data.cookies_loaded) {
+          label.textContent    = 'Pipeline ready · cookies loaded';
+          dot.style.background = 'var(--accent-3)';
+        } else {
+          label.textContent    = 'Pipeline ready · no cookies';
+          dot.style.background = '#ffcc66';
+          dot.style.boxShadow  = 'none';
+        }
       }
+    } else {
+      label.textContent    = 'Server error';
+      dot.style.background = 'var(--accent-2)';
     }
-  } catch (_) { /* silent */ }
+  } catch (_) {
+    label.textContent    = 'Offline';
+    dot.style.background = 'var(--accent-2)';
+  }
 })();
 </script>
 </body>

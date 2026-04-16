@@ -49,6 +49,49 @@ CORS(app)
 # Default transcript languages (can be overridden by request body)
 TRANSCRIPT_LANGS = ["en"]
 
+# Path to cookies file — export from browser using a cookies.txt extension
+# Place cookies.txt next to app.py on the server
+COOKIES_FILE = os.path.join(BASE_DIR, "cookies.txt")
+
+# Chrome user-agent to avoid bot detection
+CHROME_UA = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/120.0.0.0 Safari/537.36"
+)
+
+
+# -------------------------
+# yt-dlp base options
+# -------------------------
+def base_ydl_opts() -> dict:
+    """
+    Returns the baseline yt-dlp options applied to every call.
+    - cookies.txt: bypasses sign-in / 429 bot blocks
+    - user_agent: impersonates Chrome
+    - extractor_args: skips webpage + JS player parsing (faster, fewer bot signals)
+    - retries: handles transient 429s gracefully
+    """
+    opts = {
+        "quiet": True,
+        "skip_download": True,
+        "ignoreerrors": True,
+        "user_agent": CHROME_UA,
+        "extractor_args": {
+            "youtube": {
+                "skip": ["webpage"],
+                "player_skip": ["js"],
+            }
+        },
+        "retries": 5,
+    }
+    if os.path.isfile(COOKIES_FILE):
+        opts["cookiefile"] = COOKIES_FILE
+        log.debug("Using cookies file: %s", COOKIES_FILE)
+    else:
+        log.warning("cookies.txt not found at %s — requests may hit 429/bot errors", COOKIES_FILE)
+    return opts
+
 
 # -------------------------
 # Utility helpers
@@ -92,8 +135,8 @@ def extract_video_id_from_url(url: str) -> Optional[str]:
 
 
 def safe_extract_info(url: str, ydl_opts: Optional[dict] = None) -> dict:
-    opts = dict(ydl_opts or {})
-    opts.update({"quiet": True, "skip_download": True, "ignoreerrors": True})
+    opts = base_ydl_opts()           # start with anti-bot base
+    opts.update(ydl_opts or {})      # layer caller overrides on top
     try:
         with yt_dlp.YoutubeDL(opts) as ydl:
             return ydl.extract_info(url, download=False) or {}
@@ -134,24 +177,82 @@ def get_channel_videos(channel_url: str, max_videos: Optional[int] = None) -> Li
 
 
 def get_transcript(video_id: str, langs: Optional[List[str]] = None) -> Optional[Dict]:
-    """Fetch transcript using youtube-transcript-api.
+    """Fetch the fullest possible transcript using youtube-transcript-api.
 
-    Returns dict { video_id, transcript, segments } or None on failure.
+    Strategy (in order):
+      1. Find a manual transcript in the preferred languages list.
+      2. Find an auto-generated transcript in the preferred languages list.
+         YouTube auto-captions use codes like "en" OR "a.en" depending on the
+         video — both are tried automatically via find_transcript().
+      3. Take the first available transcript in any language and translate it
+         to English (covers videos with only non-English captions).
+      4. Return None only if no transcript exists at all.
+
+    Returns dict { video_id, transcript, segments, language, is_generated } or None.
     """
     if not video_id:
         log.warning("get_transcript called with empty video_id — skipping")
         return None
 
-    if langs is None:
-        langs = TRANSCRIPT_LANGS
+    preferred = list(langs or TRANSCRIPT_LANGS)
 
     try:
         api = YouTubeTranscriptApi()
-        transcript = api.fetch(video_id, languages=langs)
-        full_text = " ".join([t.text for t in transcript])
-        segments = [{"text": t.text, "start": t.start, "duration": t.duration} for t in transcript]
-        log.info("Transcript fetched for %s: %d segments", video_id, len(segments))
-        return {"video_id": video_id, "transcript": full_text, "segments": segments}
+        transcript_list = api.list(video_id)
+
+        transcript_obj = None
+
+        # ── 1. Try preferred languages (manual first, then auto-generated) ───
+        try:
+            transcript_obj = transcript_list.find_transcript(preferred)
+            log.info("Transcript found (preferred lang) for %s: %s", video_id, transcript_obj.language_code)
+        except Exception:
+            pass
+
+        # ── 2. Try any available transcript and translate to English ─────────
+        if transcript_obj is None:
+            available = list(transcript_list)
+            if available:
+                try:
+                    # pick the first one; translate if not already English
+                    candidate = available[0]
+                    if candidate.language_code not in preferred:
+                        log.info(
+                            "No preferred-lang transcript for %s — translating %s → en",
+                            video_id, candidate.language_code,
+                        )
+                        transcript_obj = candidate.translate("en")
+                    else:
+                        transcript_obj = candidate
+                except Exception as te:
+                    log.warning("Translation failed for %s: %s", video_id, te)
+                    transcript_obj = available[0]  # use as-is
+
+        if transcript_obj is None:
+            log.info("No transcript available for %s", video_id)
+            return None
+
+        # ── 3. Fetch all segments ─────────────────────────────────────────────
+        fetched = transcript_obj.fetch()
+        segments = [
+            {"text": s.text, "start": s.start, "duration": s.duration}
+            for s in fetched
+        ]
+        full_text = " ".join(s["text"] for s in segments)
+
+        log.info(
+            "Transcript fetched for %s: %d segments, %d chars, lang=%s, auto=%s",
+            video_id, len(segments), len(full_text),
+            transcript_obj.language_code, transcript_obj.is_generated,
+        )
+        return {
+            "video_id": video_id,
+            "transcript": full_text,
+            "segments": segments,
+            "language": transcript_obj.language_code,
+            "is_generated": transcript_obj.is_generated,
+        }
+
     except Exception as e:
         log.info("Transcript fetch failed for %s: %s", video_id, e)
         return None
@@ -203,6 +304,7 @@ def enrich_video(video: Dict, langs: Optional[List[str]] = None) -> Dict:
             video["uploader"] = info.get("uploader")
             video["channel_id"] = info.get("channel_id")
             video["upload_date"] = info.get("upload_date")
+            video["duration"] = video.get("duration") or info.get("duration")
             views = video.get("view_count") or 1
             likes = video.get("like_count") or 0
             comments = video.get("comment_count") or 0
@@ -218,9 +320,13 @@ def enrich_video(video: Dict, langs: Optional[List[str]] = None) -> Dict:
         if transcript_data:
             video["transcript"] = transcript_data["transcript"]
             video["transcript_segments"] = transcript_data["segments"]
+            video["transcript_language"] = transcript_data.get("language")
+            video["transcript_is_generated"] = transcript_data.get("is_generated")
         else:
             video["transcript"] = None
             video["transcript_segments"] = None
+            video["transcript_language"] = None
+            video["transcript_is_generated"] = None
     except Exception as e:
         log.warning("transcript attach failed for %s: %s", video_id, e)
         video["transcript"] = None
@@ -270,7 +376,11 @@ def index():
 
 @app.route("/api/health")
 def health():
-    return jsonify({"status": "ok", "downloads": DOWNLOADS_DIR})
+    return jsonify({
+        "status": "ok",
+        "downloads": DOWNLOADS_DIR,
+        "cookies_loaded": os.path.isfile(COOKIES_FILE),
+    })
 
 
 @app.route("/api/channel/analyze", methods=["POST"])
